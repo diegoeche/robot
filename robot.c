@@ -37,12 +37,12 @@ void die(char *s) {
 void sig_handler(int signo)
 {
   if (signo == SIGINT) {
-    printf(" * SIGINT Received\n");
+    printf(" [Sig-Handler] SIGINT Received\n");
     close(s);
     rc_disable_motors();
-    printf(" * All Motors Off\n");
+    printf(" [Sig-Handler] All Motors Off\n");
     rc_cleanup();
-    printf(" * Cleanup Done. Exiting\n");
+    printf(" [Sig-Handler] Cleanup Done. Exiting\n");
     exit(0);
   }
 }
