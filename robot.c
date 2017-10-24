@@ -49,12 +49,6 @@ void sig_handler(int signo)
   }
 }
 
-void sendCommand(robot_state_t comm) {
-  pthread_mutex_lock( &mutex1 );
-  command = comm;
-  pthread_mutex_unlock( &mutex1 );
-}
-
 void UDPLog(const char* format, ...) {
     char       msg[100];
     va_list    args;
