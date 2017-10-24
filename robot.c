@@ -66,6 +66,12 @@ void UDPLog(const char* format, ...) {
     printf(" [UDP Server] %s\n", msg);
 }
 
+void sendCommand(robot_state_t command) {
+  pthread_mutex_lock( &mutex1 );
+  command = command;
+  pthread_mutex_unlock( &mutex1 );
+}
+
 void *UDPServer() {
   // Create a UDP socket
   if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
