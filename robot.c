@@ -22,6 +22,7 @@ typedef enum robot_state_t{
   STARTING,
   STOP,
   UP,
+  LEFT, RIGHT,
   DOWN,
   KILL,
   GREEN_LED,
@@ -105,6 +106,16 @@ void *UDPServer() {
       UDPLog("DOWN Command Sent");
     }
 
+    if(strcmp(buf, "LEFT\n") == 0) {
+      sendCommand(LEFT);
+      UDPLog("LEFT Command Sent");
+    }
+
+    if(strcmp(buf, "RIGHT\n") == 0) {
+      sendCommand(RIGHT);
+      UDPLog("RIGHT Command Sent");
+    }
+
     if(strcmp(buf, "STOP\n") == 0) {
       sendCommand(STOP);
       UDPLog("STOP Command Sent");
@@ -123,9 +134,11 @@ void *UDPServer() {
   printf(" * Ending 'UDPServer' Thread\n");
 }
 
-void use_both_motors(float duty) {
-  float speed_one = duty * 1.15;
-  float speed_two = duty * 1.0;
+
+
+void use_both_motors(float left_duty, float right_duty) {
+  float speed_one = left_duty * 1.15;
+  float speed_two = right_duty * 1.0;
 
   if (speed_one > 1.0) {
     speed_one = 1.0;
@@ -156,7 +169,7 @@ void ControlLog(const char* format, ...) {
 }
 
 void *Control() {
-  float duty = 0.8;
+  float duty = 0.6;
   int time = 1;
 
   // Sanity check cape library initialized
@@ -188,11 +201,19 @@ void *Control() {
 	ControlLog("Brakes 1,2 activated");
 	break;
       case UP:
-	use_both_motors(duty);
+	use_both_motors(duty, duty);
 	ControlLog("Going forward at: [%0.4f]", duty);
 	break;
+      case LEFT:
+	use_both_motors(duty, duty * 0.5f);
+	ControlLog("Going left at: [%0.4f]", duty);
+	break;
+      case RIGHT:
+	use_both_motors(duty * 0.5f, duty);
+	ControlLog("Going right at: [%0.4f]", duty);
+	break;
       case DOWN:
-	use_both_motors(-duty);
+	use_both_motors(-duty, -duty);
 	ControlLog("Going backwards at: [%0.4f]", duty);
 	break;
       case KILL:
@@ -203,7 +224,7 @@ void *Control() {
       }
       last_command = read_command;
     }
-    usleep(100 * 1000);
+    usleep(50 * 1000);
   }
 }
 
