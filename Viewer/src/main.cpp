@@ -19,9 +19,10 @@ int main() {
   // create the window
   sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
   window.setFramerateLimit(60);
-  ImGui::SFML::Init(window);
+  ImGui::SFML::Init(window, &font);
   ImGui::GetIO().FontGlobalScale = 1.0f;
   sf::Clock clock;
+
 
   while (window.isOpen()) {
     auto elapsed = clock.restart();
