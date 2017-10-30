@@ -20,7 +20,7 @@ OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.cpp=.o)))
 bin/$(PROG): $(OBJ_FILES)
 	$(CC) $(C_LIB) $(LD_FLAGS) -o $@ $^
 
-obj/%.o: src/%.cpp src/%.h
+obj/%.o: src/%.cpp src/%.hpp
 	$(CC) $(C_FLAGS) $(C_INC) -c -o $@ $<
 
 obj/imgui.o: imgui/imgui.cpp
@@ -50,4 +50,3 @@ test_runner/test: tests/*.o obj/*.o
 
 test: test_runner/test
 	./test_runner/test
-

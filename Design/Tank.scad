@@ -23,7 +23,7 @@ module battery_pack() {
     }
  }
 // battery_pack();
-translate([0, -70]){
+%translate([0, -70]){
     difference() {
       angle = 35;
       translation = [0, -14, sin(angle) * 19];
@@ -113,7 +113,7 @@ difference() {
     translate([width - hole_w - 2.9, -hole_l - motor_l + 0.1, -0.1]) cube([hole_w + 0.5, hole_l + 0.2,motor_w]);
     screw_1_r = 2.8;
     translate([width-12-screw_1_r, -56, -0.1]) cylinder(110,screw_1_r, screw_1_r, true);
-    screw_2_r = 2.7;
+    screw_2_r = 2.8;
     translate([width - 40 - screw_2_r, -58, -0.1]) cylinder(20,screw_2_r, screw_2_r, true);
   }
 }
