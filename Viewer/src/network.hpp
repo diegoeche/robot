@@ -6,4 +6,4 @@ void StatsServer();
 
 // Sends a command using UDP
 void sendCommand(const char message[]);
-void networkInitialize();
+void networkInitialize(char server[]);

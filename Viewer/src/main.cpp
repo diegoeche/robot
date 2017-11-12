@@ -13,6 +13,8 @@ static bool ENABLE_DEBUGGING = false;
 static char UP[]    = "UP\n";
 static char DOWN[]  = "DOWN\n";
 static char LEFT[]  = "LEFT\n";
+static char NW[]  = "NW\n";
+static char NE[]  = "NE\n";
 static char RIGHT[] = "RIGHT\n";
 static char STOP[]  = "STOP\n";
 
@@ -45,15 +47,14 @@ void handleEvents (sf::Event event) {
   switch (event.type) {
   case sf::Event::KeyPressed:
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-      CURRENT_COMMAND = LEFT;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-      CURRENT_COMMAND = RIGHT;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) CURRENT_COMMAND = NW;
+      else CURRENT_COMMAND = LEFT;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) CURRENT_COMMAND = NE;
+      else CURRENT_COMMAND = RIGHT;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
       CURRENT_COMMAND = UP;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
       CURRENT_COMMAND = DOWN;
     }
     break;
@@ -91,15 +92,21 @@ void drawFrameDrawingStats(float elapsed) {
 }
 
 
-int main() {
+int main(int args, char **parameters) {
   // create the window
   sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
   window.setFramerateLimit(60);
   ImGui::SFML::Init(window);
   ImGui::GetIO().FontGlobalScale = 1.0f;
   sf::Clock clock;
-  networkInitialize();
-  // StatsServer();
+  if(args > 1) {
+    printf("IP: %s\n", parameters[1]);
+    networkInitialize(parameters[1]);
+  } else {
+    networkInitialize("192.168.1.3");
+  }
+
+  // statsserver();
 
   sf::Clock lastMessage;
 
