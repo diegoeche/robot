@@ -60,9 +60,9 @@ void UDPLog(const char* format, ...) {
     printf(" [UDP Server] %s\n", msg);
 }
 
-void sendCommand(robot_state_t command) {
+void sendCommand(robot_state_t comm) {
   pthread_mutex_lock( &mutex1 );
-  command = command;
+  command = comm;
   pthread_mutex_unlock( &mutex1 );
 }
 
