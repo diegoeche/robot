@@ -1,0 +1,1 @@
+void drawFrameDrawingStats(float elapsed);
