@@ -9,6 +9,7 @@
 
 #include "stats.hpp"
 #include "gear.hpp"
+#include "gear_box.hpp"
 
 static bool ENABLE_DEBUGGING = false;
 
@@ -21,7 +22,7 @@ void drawMenu() {
 
   ImVec4 green = ImVec4(0.0f,8.0f,0.1f,1.0f);
   ImVec4 red = ImVec4(1.0f,0.1f,0.0f,1.0f);
-
+  RUNNING = SPEED != 0;
   if(!RUNNING) {
     ImGui::TextColored(red, "STOP");
   } else {
@@ -40,12 +41,12 @@ void die(sf::RenderWindow &window) {
 void handleEvents (sf::Event event) {
   switch (event.type) {
   case sf::Event::KeyPressed:
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-      RUNNING = true;
-    }
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+    //   RUNNING = true;
+    // }
     break;
   case sf::Event::KeyReleased:
-    RUNNING = false;
+    // RUNNING = false;
     break;
 
     // we don't process other types of events
@@ -61,23 +62,12 @@ int main() {
   ImGui::SFML::Init(window);
   ImGui::GetIO().FontGlobalScale = 1.0f;
   sf::Clock clock;
-  float smallRadius = 20;
-  float bigRadius = 60;
-  float x = 20;
-  float y = 20;
-  float smallAngle = 365/8;
-  float bigAngle = 0;
-
-  Gear big(bigRadius, x, y);
-  Gear small(smallRadius, x + bigRadius * 2, y + (bigRadius-smallRadius));
+  GearBox gb(20, 60);
 
   while (window.isOpen()) {
     auto elapsed = clock.restart();
     ImGui::SFML::Update(window, elapsed);
-    smallAngle += elapsed.asSeconds() * SPEED;
-    small.setAngle(smallAngle);
-    bigAngle -= (elapsed.asSeconds() * SPEED) * (smallRadius / bigRadius);
-    big.setAngle(bigAngle);
+    gb.run(elapsed.asSeconds(), SPEED);
 
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -88,15 +78,7 @@ int main() {
 
     window.clear(sf::Color::Black);
 
-    // // sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-    // rectangle.setPosition(0,0)// ;
-    // rectangle.setOutlineThickn// ess(20);
-    // rectangle.setOutlineColor(// sf::Color(0, 0, 0));
-    // rectangle.setFillColor(sf:// :Color(100, 100, 100, 255));
-    // window.draw(rectangle);
-
-    big.render(window);
-    small.render(window);
+    gb.render(window);
 
     drawMenu();
     drawFrameDrawingStats(elapsed.asSeconds());

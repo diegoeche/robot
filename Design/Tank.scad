@@ -41,7 +41,7 @@ module back_holes(d) {
   for (i=[0:2]) translate([width/2, d + (i*16), -5]){
     cylinder(100, 2);
     if(i == 2) {
-        translate([20 - 4, 10, 4]) {
+        translate([20 - 4, 10, 2]) {
             cylinder(110, 3.6);
             translate([-5, -5, 4.5]) cube([10, 10, 10]);
         }
@@ -95,7 +95,7 @@ module chassis() {
       %translate([width/2, -9, -8]) {
 	 *rotate([90, 0, 90]) battery_pack();
       }
-      difference() {
+      !difference() {
 	union() {
 	   battery_holder_w = 15;
 	   battery_holder_l = 45;
@@ -104,7 +104,7 @@ module chassis() {
 	   battery_h = 15;
 	   camera_l = 33;
 	   camera_w = 38;
-	   camera_h = 25;
+	   camera_h = 40;
 	   translate([width/2 - battery_holder_w / 2, 0, -height]) {
 		cube([battery_holder_w,battery_holder_l,height]);
 	   }
@@ -124,12 +124,15 @@ module chassis() {
 	   translate([width/2 - (camera_l / 2), battery_holder_l, -camera_h]) {
 		difference() {
 		     c_w = 1.5;
-		     margin = 3;
+		     margin = 2.9;
 		     cube([camera_l,camera_w,camera_h]);
 		     translate([margin,margin,0]) cylinder(20, c_w, c_w, true);
 		     translate([camera_l - margin, margin, 0]) cylinder(20, c_w, c_w, true);
 		     translate([margin,camera_w - margin,0]) cylinder(20, c_w, c_w, true);
 		     translate([camera_l - margin,camera_w - margin,0]) cylinder(20, c_w, c_w, true);
+
+		     translate([camera_l - margin,(1 * camera_h) + 10, camera_h/2 + height + 20])
+			  rotate([90, 90, 90]) cylinder(100, camera_h, camera_h, true);
 		}
 	   }
         }

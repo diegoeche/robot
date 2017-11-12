@@ -35,13 +35,18 @@ void Gear::render(sf::RenderWindow &window) {
   window.draw(circle);
 
   int dents = (((2 * PI * radius) / (float) DENT_SIZE)) / 3;
-  // std::cout << "dents:" << dents << std::endl;
+
   float step = 365 / dents;
   for (int i = 0; i < dents; i++) {
     float dentAngle = this->angle + i * step;
-    sf::CircleShape dent(DENT_SIZE);
-    dent.setFillColor(GEAR_COLOR);
-    dent.setPosition(x - DENT_SIZE + radius + radius * sin(dentAngle * (PI/180)), y -DENT_SIZE + radius + radius * cos(dentAngle * (PI/180)));
+    int realDentSize = DENT_SIZE - 3;
+    sf::CircleShape dent(realDentSize);
+    if(i == 0) {
+      dent.setFillColor(sf::Color(200,200,200));
+    } else {
+      dent.setFillColor(GEAR_COLOR);
+    }
+    dent.setPosition(x - realDentSize + radius + radius * sin(dentAngle * (PI/180)), y - realDentSize + radius + radius * cos(dentAngle * (PI/180)));
     window.draw(dent);
   }
 }
