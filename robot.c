@@ -21,7 +21,7 @@ char buf[BUFLEN];
 typedef enum robot_state_t{
   STARTING,
   STOP,
-  UP,
+  NW, UP, NE,
   LEFT, RIGHT,
   DOWN,
   KILL,
@@ -104,6 +104,16 @@ void *UDPServer() {
     if(strcmp(buf, "DOWN\n") == 0) {
       sendCommand(DOWN);
       UDPLog("DOWN Command Sent");
+    }
+
+    if(strcmp(buf, "NW\n") == 0) {
+      sendCommand(NW);
+      UDPLog("NW Command Sent");
+    }
+
+    if(strcmp(buf, "NE\n") == 0) {
+      sendCommand(NE);
+      UDPLog("NE Command Sent");
     }
 
     if(strcmp(buf, "LEFT\n") == 0) {
@@ -211,6 +221,14 @@ void *Control() {
       case RIGHT:
 	use_both_motors(duty * 0.5f, duty);
 	ControlLog("Going right at: [%0.4f]", duty);
+	break;
+      case NW:
+	use_both_motors(duty, duty * 0.75f);
+	ControlLog("Going nw at: [%0.4f]", duty);
+	break;
+      case NE:
+	use_both_motors(duty * 0.75f, duty);
+	ControlLog("Going ne at: [%0.4f]", duty);
 	break;
       case DOWN:
 	use_both_motors(-duty, -duty);
