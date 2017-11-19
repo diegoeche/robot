@@ -56,6 +56,7 @@ void sig_handler(int signo)
     printf(" [Sig-Handler] SIGINT Received\n");
     close(s);
     rc_disable_motors();
+    rc_disable_servo_power_rail();
     printf(" [Sig-Handler] All Motors Off\n");
     rc_cleanup();
     printf(" [Sig-Handler] Cleanup Done. Exiting\n");
@@ -109,62 +110,63 @@ void UDPServer() {
     UDPLog("Received packet from %s:%d", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
     UDPLog("Data: [%s  ]", buf);
 
-    if(strcmp(buf, "UP\n") == 0) {
-      sendCommand(UP);
-      UDPLog("UP Command Sent");
-    }
-
-    if(strcmp(buf, "DOWN\n") == 0) {
-      sendCommand(DOWN);
-      UDPLog("DOWN Command Sent");
-    }
-
-    if(strcmp(buf, "NW\n") == 0) {
-      sendCommand(NW);
-      UDPLog("NW Command Sent");
-    }
-
-    if(strcmp(buf, "NE\n") == 0) {
-      sendCommand(NE);
-      UDPLog("NE Command Sent");
-    }
-
-    if(strcmp(buf, "LEFT\n") == 0) {
-      sendCommand(LEFT);
-      UDPLog("LEFT Command Sent");
-    }
-
-    if(strcmp(buf, "RIGHT\n") == 0) {
-      sendCommand(RIGHT);
-      UDPLog("RIGHT Command Sent");
-    }
-
-    if(strcmp(buf, "STOP\n") == 0) {
-      sendCommand(STOP);
-      UDPLog("STOP Command Sent");
-    }
-
-    if(strcmp(buf, "KILL\n") == 0) {
-      sendCommand(KILL);
-      UDPLog("KILL Command Sent");
-    }
-
-    if(strcmp(buf, "KILL\n") == 0) {
-      sendCommand(KILL);
-      UDPLog("KILL Command Sent");
-    }
-
     std::stringstream ss;
     ss << buf;
     std::string command;
     std::getline(ss, command);
-    std::cout << command << std::endl;
+
+    if(command == "UP") {
+      sendCommand(UP);
+      UDPLog("UP Command Sent");
+    }
+
+    if(command == "DOWN") {
+      sendCommand(DOWN);
+      UDPLog("DOWN Command Sent");
+    }
+
+    if(command == "NW") {
+      sendCommand(NW);
+      UDPLog("NW Command Sent");
+    }
+
+    if(command == "NE") {
+      sendCommand(NE);
+      UDPLog("NE Command Sent");
+    }
+
+    if(command == "LEFT") {
+      sendCommand(LEFT);
+      UDPLog("LEFT Command Sent");
+    }
+
+    if(command == "RIGHT") {
+      sendCommand(RIGHT);
+      UDPLog("RIGHT Command Sent");
+    }
+
+    if(command == "STOP") {
+      sendCommand(STOP);
+      UDPLog("STOP Command Sent");
+    }
+
+    if(command == "KILL") {
+      sendCommand(KILL);
+      UDPLog("KILL Command Sent");
+    }
+
+    if(command == "KILL") {
+      sendCommand(KILL);
+      UDPLog("KILL Command Sent");
+    }
 
     if(command == "SET_CAMMERA") {
       float x;
       float y;
       ss >> x >> y;
-      std::cout << "Moving to: " << x << "," << y << std::endl;
+      if(x > -1.5 && x < 1.5) rc_send_servo_pulse_normalized(7, x);
+      if(y > -1.5 && y < 1.5) rc_send_servo_pulse_normalized(8, y);
+      UDPLog("SET_CAMMERA");
     }
     // Reply the client with the same data
     /* if (sendto(s, buf, recv_len, 0, (struct sockaddr*) &si_other, slen) == -1) die("sendto()"); */
@@ -224,6 +226,7 @@ void Control() {
 
   // Bring H-bridges of standby
   rc_enable_motors();
+  rc_enable_servo_power_rail();
 
   ControlLog("Motors activated. Starting Control Loop.");
 
@@ -287,6 +290,7 @@ int main() {
 
   // Disable motors
   rc_disable_motors();
+  rc_disable_servo_power_rail();
   printf("All Motors Off\n");
 
   // final cleanup
