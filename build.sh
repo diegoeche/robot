@@ -1,1 +1,1 @@
-g++ robot.c -o robot -std=c++11 -lroboticscape -lpthread
+g++ robot.c -o robot -std=c++14 -lroboticscape -lpthread

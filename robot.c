@@ -1,17 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <sstream>
+#include <iostream>
+
 #include <string.h>
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include "rc_usefulincludes.h"
+#include <time.h>
+#include <signal.h>
+#include <unistd.h>
 
 extern "C" {
   #include <roboticscape.h>
 }
 
-#include <unistd.h>
 #include <stdarg.h>
-
 #include <thread>
 #include <mutex>
 
@@ -147,6 +149,23 @@ void UDPServer() {
       UDPLog("KILL Command Sent");
     }
 
+    if(strcmp(buf, "KILL\n") == 0) {
+      sendCommand(KILL);
+      UDPLog("KILL Command Sent");
+    }
+
+    std::stringstream ss;
+    ss << buf;
+    std::string command;
+    std::getline(ss, command);
+    std::cout << command << std::endl;
+
+    if(command == "SET_CAMMERA") {
+      float x;
+      float y;
+      ss >> x >> y;
+      std::cout << "Moving to: " << x << "," << y << std::endl;
+    }
     // Reply the client with the same data
     /* if (sendto(s, buf, recv_len, 0, (struct sockaddr*) &si_other, slen) == -1) die("sendto()"); */
   }
@@ -258,7 +277,7 @@ void Control() {
   }
 }
 
-main() {
+int main() {
   int rc1, rc2;
   std::thread t1(UDPServer);
   std::thread t2(Control);
