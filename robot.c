@@ -1,21 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <rc_usefulincludes.h>
-#include <roboticscape.h>
+#include "rc_usefulincludes.h"
+
+extern "C" {
+  #include <roboticscape.h>
+}
+
 #include <unistd.h>
 #include <stdarg.h>
+
+#include <thread>
+#include <mutex>
+
 
 #define BUFLEN 512  // UDP Server Buffer Size
 #define PORT 8888   // The port on which to listen for incoming data
 
 struct sockaddr_in si_me, si_other;
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
-int s, i, slen = sizeof(si_other), recv_len;
+std::mutex mutex1;
+
+
+unsigned int s, i, slen = sizeof(si_other), recv_len;
 char buf[BUFLEN];
 
 typedef enum robot_state_t{
@@ -30,6 +39,9 @@ typedef enum robot_state_t{
 } robot_state_t;
 
 robot_state_t command = STOP;
+
+/* extern "C" void rc_disable_motors(); */
+
 
 void die(char *s) {
   perror(s);
@@ -61,12 +73,11 @@ void UDPLog(const char* format, ...) {
 }
 
 void sendCommand(robot_state_t comm) {
-  pthread_mutex_lock( &mutex1 );
+  std::lock_guard<std::mutex> guard(mutex1);
   command = comm;
-  pthread_mutex_unlock( &mutex1 );
 }
 
-void *UDPServer() {
+void UDPServer() {
   // Create a UDP socket
   if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
     die("socket");
@@ -178,7 +189,7 @@ void ControlLog(const char* format, ...) {
     printf(" [Control] %s\n", msg);
 }
 
-void *Control() {
+void Control() {
   float duty = 0.6;
   int time = 1;
 
@@ -200,9 +211,10 @@ void *Control() {
   robot_state_t last_command = STARTING;
 
   while(1) {
-    pthread_mutex_lock( &mutex1 );
+    std::lock_guard<std::mutex> guard(mutex1);
     robot_state_t read_command = command;
-    pthread_mutex_unlock( &mutex1 );
+
+
     if(read_command != last_command) {
       switch(read_command) {
       case STOP:
@@ -248,18 +260,11 @@ void *Control() {
 
 main() {
   int rc1, rc2;
-  pthread_t thread1, thread2;
+  std::thread t1(UDPServer);
+  std::thread t2(Control);
 
-  if(rc1=pthread_create(&thread1, NULL, &UDPServer, NULL)) {
-    printf("UDP thread failed: %d\n", rc1);
-  }
-
-  if( (rc2=pthread_create( &thread2, NULL, &Control, NULL)) ) {
-    printf("Control Thread creation failed: %d\n", rc2);
-  }
-
-  pthread_join(thread1, NULL);
-  pthread_join(thread2, NULL);
+  t1.join();
+  t2.join();
 
   // Disable motors
   rc_disable_motors();
