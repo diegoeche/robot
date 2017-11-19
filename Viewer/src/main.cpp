@@ -21,10 +21,25 @@ static char STOP[]  = "STOP\n";
 static char *CURRENT_COMMAND = STOP;
 static char *LAST_COMMAND = STOP;
 
+static float x;
+static float y;
+
 void drawMenu() {
   ImGui::Begin("Tank Viewer");
+  float c_x = x;
+  float c_y = y;
+  ImGui::SliderFloat("Camera X", &x, -1.5, 1.5, "%.2f");
+  ImGui::SliderFloat("Camera Y", &y, -1.5, 1.5, "%.2f");
+  if(c_x != x || c_y != y) {
+    std::ostringstream os;
+    os << "SET_CAMMERA" << std::endl << x << " " << y << std::endl;
+    std::string str = os.str();
+    char * cstr = new char [str.length()+1];
+    std::strcpy (cstr, str.c_str());
+    sendCommand(cstr);
+  }
+
   ImGui::Text("Current Command:");
-  ImGui::SameLine();
 
   ImVec4 green = ImVec4(0.0f,8.0f,0.1f,1.0f);
   ImVec4 red = ImVec4(1.0f,0.1f,0.0f,1.0f);
@@ -43,6 +58,13 @@ void die(sf::RenderWindow &window) {
   exit(0);
 }
 
+bool anyKeyPressed() {
+  return sf::Keyboard::isKeyPressed(sf::Keyboard::Up) ||
+    sf::Keyboard::isKeyPressed(sf::Keyboard::Down) ||
+    sf::Keyboard::isKeyPressed(sf::Keyboard::Left) ||
+    sf::Keyboard::isKeyPressed(sf::Keyboard::Right);
+}
+
 void handleEvents (sf::Event event) {
   switch (event.type) {
   case sf::Event::KeyPressed:
@@ -59,9 +81,9 @@ void handleEvents (sf::Event event) {
     }
     break;
   case sf::Event::KeyReleased:
-    CURRENT_COMMAND = STOP;
+    if (!anyKeyPressed()) CURRENT_COMMAND = STOP;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) CURRENT_COMMAND = UP;
     break;
-
     // we don't process other types of events
   default:
     break;
@@ -130,6 +152,7 @@ int main(int args, char **parameters) {
     rectangle.setOutlineColor(sf::Color(0, 0, 0));
     rectangle.setFillColor(sf::Color(100, 100, 100, 255));
     window.draw(rectangle);
+
 
     sf::Time sinceLastMessage = lastMessage.getElapsedTime();
     if (LAST_COMMAND != CURRENT_COMMAND) {
