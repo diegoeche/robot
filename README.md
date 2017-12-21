@@ -44,4 +44,4 @@ To build it just do `make clean && make`.
 
 # Demo:
 
-<iframe width="420" height="315" src="https://www.youtube.com/embed/PcdDbFi5Nmg"> </iframe>
+[![Alt text](https://img.youtube.com/vi/PcdDbFi5Nmg/0.jpg)](https://www.youtube.com/watch?v=PcdDbFi5Nmg)
