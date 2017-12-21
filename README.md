@@ -20,7 +20,7 @@ It contains the client/server code for the rover and the design files for the cu
 
 ## Custom Parts:
 
-TBD
+<img width=50% src=/scad-model.png ></img>
 
 # Code
 
