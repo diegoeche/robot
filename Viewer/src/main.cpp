@@ -1,8 +1,13 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
+
 #include <GLUT/glut.h>
 #include "SFML/OpenGL.hpp"
 #include <thread>
+#include <string>
+
 #include <sstream>
+#include <iostream>
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -113,6 +118,7 @@ void drawFrameDrawingStats(float elapsed) {
   ImGui::End();
 }
 
+#define TCP_SIZE (1024 * 2)
 
 int main(int args, char **parameters) {
   // create the window
@@ -131,8 +137,42 @@ int main(int args, char **parameters) {
   // statsserver();
 
   sf::Clock lastMessage;
+  int lastValidPos = 0;
+
+  // sf::TcpSocket socket;
+  // // socket.setBlocking(false);
+  // char data[TCP_SIZE] =
+  //   "GET /?action=stream HTTP/1.1\n"
+  //   "Host: 192.168.1.6:8090\n"
+  //   "Connection: keep-alive\n"
+  //   "Cache-Control: max-age=0\n"
+  //   "User-Agent: Dr Faldin Robotin\n"
+  //   "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n"
+  //   "Accept-Encoding: gzip, deflate\n"
+  //   "\n";
+
+  // sf::Socket::Status connect = socket.connect("192.168.1.6", 8090);
+
+  // if(connect == sf::Socket::Error) {
+  //   std::cout << "Error Connecting" << std::endl;
+  // }
+
+  // // TCP socket:
+  // sf::Socket::Status request = socket.send(data, TCP_SIZE);
+  // std::cout << data << std::endl;
+  // if (request != sf::Socket::Done){
+  //   if(request == sf::Socket::Error) {
+  //     std::cout << "Error Connecting" << std::endl;
+  //   }
+  // }
+
+  // socket.setBlocking(false);
+  std::stringstream readStream;
+
+  int frames = 0;
 
   while (window.isOpen()) {
+    frames++;
     auto elapsed = clock.restart();
     ImGui::SFML::Update(window, elapsed);
 
@@ -153,6 +193,55 @@ int main(int args, char **parameters) {
     rectangle.setFillColor(sf::Color(100, 100, 100, 255));
     window.draw(rectangle);
 
+    // char readData[TCP_SIZE];
+    // std::size_t received;
+
+    // TCP socket:
+    // sf::Socket::Status status = socket.receive(readData, TCP_SIZE, received);
+    // if (status == sf::Socket::Error){
+    //   std::cout << "Error:" << status << std::endl;
+    // } else if (status == sf::Socket::Disconnected) {
+    //   std::cout << "Disconnected" << std::endl;
+    // } else if (status == sf::Socket::Done) {
+
+    //   if(readStream.tellp()) {
+    // 	readStream.clear();
+    // 	readStream.seekg(readStream.beg);
+    // 	// std::cout << "Reseting to:" << readStream.tellp() << std::endl;
+    //   }
+
+    //   socket.receive(readData, TCP_SIZE, received);
+    //   // std::stringstream partialRead;
+    //   // partialRead << readData;
+    //   readStream << readData;
+
+
+    //   std::string firstLine;
+    //   std::string type ("--boundarydonotcross\r");
+    //   // std::string type ("Content-Type: image/jpeg\r");
+    //   int i = 0;
+    //   int images = 0;
+
+    //   while(std::getline(readStream, firstLine)) {
+    // 	// std::cout << firstLine << std::endl;
+    // 	if(firstLine.compare(type) == 0) {
+    // 	  images ++;
+    // 	  // std::cout << firstLine << std::endl;
+    // 	  // std::cout << readStream.tellp() << std::endl;
+    // 	}
+    // 	i++;
+    //   }
+    //   if((frames % 60) == 0) {
+    // 	std::cout << "Images:" << images << std::endl;
+    // 	std::cout << "Lines read: " << i << std::endl;
+    //   }
+    //   // std::getline(readStream, firstLine);
+    //   // std::cout << firstLine << std::endl;
+    //   // if(firstLine == "--boundarydonotcross") {
+    //   // 	std::cout << "Starting Data:" << std::endl;
+    //   // 	std::cout << firstLine << std::endl;
+    //   // }
+    // }
 
     sf::Time sinceLastMessage = lastMessage.getElapsedTime();
     if (LAST_COMMAND != CURRENT_COMMAND) {

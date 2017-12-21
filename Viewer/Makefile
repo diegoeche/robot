@@ -2,7 +2,7 @@
 PROG := main
 
 # Project specific libraries and compiler flags
-LD_FLAGS := -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lstdc++ -framework OpenGL
+LD_FLAGS := -lsfml-graphics -lsfml-network -lsfml-audio -lsfml-window -lsfml-system -lstdc++ -framework OpenGL
 C_FLAGS  := -std=c++14 -O0 -Wall -Wextra -Wshadow -pedantic -g
 
 # Desired compiler
