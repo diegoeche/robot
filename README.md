@@ -3,7 +3,7 @@
 This repository contains my pet-project in robotics using
 the [Beaglebone Blue](https://github.com/beagleboard/beaglebone-blue).
 
-<img src=/Truly.jpeg ></img>
+<img width=50% src=/Truly.jpeg ></img>
 
 It contains the client/server code for the rover and the design files for the custom
 3d printed parts.
