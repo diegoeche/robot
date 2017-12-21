@@ -93,9 +93,9 @@ module chassis() {
 	back_holes(first_screw_distance);
       }
       %translate([width/2, -9, -8]) {
-	 *rotate([90, 0, 90]) battery_pack();
+	    *rotate([90, 0, 90]) battery_pack();
       }
-      !difference() {
+      difference() {
 	union() {
 	   battery_holder_w = 15;
 	   battery_holder_l = 45;
@@ -121,6 +121,14 @@ module chassis() {
 	   	cube([height, battery_holder_l, battery_h + height]);
 	   }
 
+       translate([-(height*2), battery_holder_l, -(battery_h + height)]) {
+
+        difference() {
+          cube([battery_length + (2 * height) - 0.5, height, battery_h + height]);
+          ch = 5;
+          translate([ch,-0.1,-0.1]) cube([ch + 0.2,ch + 0.2, (2*ch) + 0.2]);
+        }
+	   }
 	   translate([width/2 - (camera_l / 2), battery_holder_l, -camera_h]) {
 		difference() {
 		     c_w = 1.5;

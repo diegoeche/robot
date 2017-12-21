@@ -3,7 +3,7 @@
 This repository contains my pet-project in robotics using
 the [Beaglebone Blue](https://github.com/beagleboard/beaglebone-blue).
 
-<img width=50% src=/Truly.jpeg ></img>
+<img width=70% src=/Truly.jpeg ></img>
 
 It contains the client/server code for the rover and the design files for the custom
 3d printed parts.
@@ -19,6 +19,9 @@ It contains the client/server code for the rover and the design files for the cu
 - Camera: [Logitech C270](https://www.amazon.de/Logitech-C270-Webcam-720p-schwarz/dp/B01BGBJ8Y0/ref=sr_1_1?ie=UTF8&qid=1513867536&sr=8-1&keywords=logitech+c270)
 
 ## Custom Parts:
+
+This is work in progress so no STLs provided yet. The openscad files are available in
+the Design folder.
 
 <img width=50% src=/scad-model.png ></img>
 
