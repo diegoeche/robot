@@ -49,54 +49,10 @@ module back_holes(d) {
   }
 }
 
-module chassis() {
-  translate([0, -70]){
-      difference() {
-        angle = 35;
-        translation = [0, -14, sin(angle) * 19];
-        union() {
-          base(70);
-          difference() {
-            translate(translation) {
-              rotate([-angle, 0, 0]) {
-                base(19);
-              }
-            }
-            translate(translation + [-1, 0, 2.1]) {
-                scale(1.1) {
-                  cube([width, 10, 10]);
-                }
 
-                translate([border + 0.9 , -border + 5.3, 0.0])
-                      rotate([-angle, 0, 0])
-                          cube([support_width + 0.2, border/2 + .7, border/2]);
-            }
-          }
-          translate(translation + [0, 2.2, border + 2]) {
-              rotate([-90, 0, 0]) {
-                scale([1,1,1/sin(angle) * .5]) {
-                    difference() {
-                      support(border);
-                      rotate([40, 0, 0]) {
-                        translate([-1, 2, 0.5]) {
-                          scale(1.1) {
-                            support(border);
-                           }
-                        }
-                      }
-                    }
-
-                }
-              }
-          };
-        }
-	back_holes(first_screw_distance);
-      }
-      %translate([width/2, -9, -8]) {
-	    *rotate([90, 0, 90]) battery_pack();
-      }
-      difference() {
-	union() {
+module camera_holder() {
+    difference() {
+	  union() {
 	   battery_holder_w = 15;
 	   battery_holder_l = 45;
 	   battery_length = 70;
@@ -146,6 +102,55 @@ module chassis() {
         }
 	back_holes(first_screw_distance);
       }
+}
+module chassis() {
+  translate([0, -70]){
+      difference() {
+        angle = 35;
+        translation = [0, -14, sin(angle) * 19];
+        union() {
+          base(70);
+          difference() {
+            translate(translation) {
+              rotate([-angle, 0, 0]) {
+                base(19);
+              }
+            }
+            translate(translation + [-1, 0, 2.1]) {
+                scale(1.1) {
+                  cube([width, 10, 10]);
+                }
+
+                translate([border + 0.9 , -border + 5.3, 0.0])
+                      rotate([-angle, 0, 0])
+                          cube([support_width + 0.2, border/2 + .7, border/2]);
+            }
+          }
+          translate(translation + [0, 2.2, border + 2]) {
+              rotate([-90, 0, 0]) {
+                scale([1,1,1/sin(angle) * .5]) {
+                    difference() {
+                      support(border);
+                      rotate([40, 0, 0]) {
+                        translate([-1, 2, 0.5]) {
+                          scale(1.1) {
+                            support(border);
+                           }
+                        }
+                      }
+                    }
+
+                }
+              }
+          };
+        }
+	back_holes(first_screw_distance);
+      }
+      %translate([width/2, -9, -8]) {
+	    *rotate([90, 0, 90]) battery_pack();
+      }
+    // Set % here for chassis only (Camera Holder)
+    camera_holder();
   }
 
   function sum(v,i) = (i==len(v) ? 0 : v[i] + sum(v,i+1));
