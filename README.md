@@ -35,6 +35,16 @@ beaglebone and call `build.sh`.
 
 To start it you'd need to do: `sudo ./robot`
 
+To start the streaming of video:
+
+`mjpg_streamer -i "input_uvc.so" -o "output_http.so -p 8090"`
+
+
+And go to:
+
+`http://<trurly-ip>:8090/?action=stream`
+
+
 ## Client
 
 The code for the client lives in `/Viewer` and assumes the build system has access to
