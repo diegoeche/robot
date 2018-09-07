@@ -1,11 +1,10 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
-
+// #include <SFML/OpenGL.hpp>
 #include <GLUT/glut.h>
-#include "SFML/OpenGL.hpp"
+
 #include <thread>
 #include <string>
-
 #include <sstream>
 #include <iostream>
 
@@ -13,7 +12,7 @@
 #include "imgui-SFML.h"
 #include "network.hpp"
 
-static bool ENABLE_DEBUGGING = false;
+// static bool ENABLE_DEBUGGING = false;
 
 static char UP[]    = "UP\n";
 static char DOWN[]  = "DOWN\n";
@@ -95,9 +94,20 @@ void handleEvents (sf::Event event) {
   }
 }
 
+//////////////// Histogram Buffers ////////////////////
 
-#define TIMES_BUFFER_SIZE 100
+#define BUFFER_SIZE 300
+#define TIMES_BUFFER_SIZE BUFFER_SIZE
 static float TIMES_BUFFER[TIMES_BUFFER_SIZE];
+
+#define TEMP_BUFFER_SIZE BUFFER_SIZE
+static float TEMP_BUFFER[TEMP_BUFFER_SIZE];
+
+#define MAG_BUFFER_SIZE BUFFER_SIZE
+static float MAG_BUFFER[3][MAG_BUFFER_SIZE];
+
+#define GYRO_BUFFER_SIZE BUFFER_SIZE
+static float GYRO_BUFFER[3][GYRO_BUFFER_SIZE];
 
 void drawFrameDrawingStats(float elapsed) {
   std::ostringstream os;
@@ -115,18 +125,147 @@ void drawFrameDrawingStats(float elapsed) {
 
   // Frame Rate
   ImGui::PlotHistogram(cstr, TIMES_BUFFER, TIMES_BUFFER_SIZE, 0, NULL, 0, 0.1f);
+
+  sf::Vector2f size(250, 80);
+
+  ImGui::PlotHistogram("Temperature", TEMP_BUFFER, TEMP_BUFFER_SIZE, 0, NULL, 0, 100.0f, size);
+
+  ImGui::Columns(2);
+  ImGui::PlotHistogram("MagX",  MAG_BUFFER[0],  MAG_BUFFER_SIZE,  0, NULL, -1000, 1000.0f, size);
+  ImGui::PlotHistogram("MagY",  MAG_BUFFER[1],  MAG_BUFFER_SIZE,  0, NULL, -4000, 500.0f, size);
+  ImGui::PlotHistogram("MagZ",  MAG_BUFFER[2],  MAG_BUFFER_SIZE,  0, NULL, 0, 360.0f, size);
+
+  ImGui::NextColumn();
+
+  ImGui::PlotHistogram("GyroX", GYRO_BUFFER[0], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
+  ImGui::PlotHistogram("GyroY", GYRO_BUFFER[1], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
+  ImGui::PlotHistogram("GyroZ", GYRO_BUFFER[2], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
+
   ImGui::End();
 }
 
-#define TCP_SIZE (1024 * 2)
+void drawRectangle(sf::RenderWindow &window) {
+  sf::RectangleShape rectangle(sf::Vector2f(30, 30));
+  rectangle.setPosition(0,0);
+  rectangle.setOutlineThickness(20);
+  rectangle.setOutlineColor(sf::Color(0, 0, 0));
+  rectangle.setFillColor(sf::Color(100, 100, 100, 255));
+  window.draw(rectangle);
+}
 
-int main(int args, char **parameters) {
-  // create the window
-  sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+void processEvents(sf::RenderWindow &window) {
+  sf::Event event;
+  while (window.pollEvent(event)) {
+    ImGui::SFML::ProcessEvent(event);
+    handleEvents(event);
+    if (event.type == sf::Event::Closed) die(window);
+  }
+
+  // Send network commands:
+  if (LAST_COMMAND != CURRENT_COMMAND) {
+    for(int i= 0; i < 4; i++) {
+      sendCommand(CURRENT_COMMAND);
+    }
+    LAST_COMMAND = CURRENT_COMMAND;
+  }
+}
+
+void initWindow(sf::RenderWindow &window) {
   window.setFramerateLimit(60);
   ImGui::SFML::Init(window);
   ImGui::GetIO().FontGlobalScale = 1.0f;
+}
+
+void drawUI(sf::RenderWindow &window, sf::Time elapsed) {
+  drawRectangle(window);
+  drawMenu();
+  drawFrameDrawingStats(elapsed.asSeconds());
+}
+
+void processNetwork(sf::UdpSocket &socket) {
+  char data[1024];
+  std::size_t received;
+  sf::IpAddress sender;
+  unsigned short port;
+
+  auto status = socket.receive(data, 1024, received, sender, port);
+  if (status != sf::Socket::Done) {
+    if(status == sf::Socket::NotReady) {
+      // This is Ok
+    } else {
+      printf("Error receiving data\n");
+    }
+  } else {
+    std::stringstream ss;
+    ss << data;
+
+    // TEMP: 43.6 MAG:  655.7 -3970.3    nan GYRO:    0.0    0.0   -0.0
+
+    float temp;
+    float mag[3];
+    float gyro[3];
+
+    std::string command;
+    ss >> command;
+
+    ss >> temp;
+    printf("%f\n", temp);
+
+    // MAG:
+    ss >> command;
+    ss >> mag[0] >> mag[1] >> mag[2];
+    printf("%f, %f, %f\n", mag[0], mag[1], mag[2]);
+
+    // GYRO:
+    ss >> command;
+    ss >> gyro[0] >> gyro[1] >> gyro[2];
+    printf("%f, %f, %f\n", gyro[0], gyro[1], gyro[2]);
+
+    for(int i = 0; i < TEMP_BUFFER_SIZE - 1; i++) {
+      TEMP_BUFFER[i] = TEMP_BUFFER[i+1];
+    }
+    TEMP_BUFFER[TEMP_BUFFER_SIZE-1] = temp;
+
+
+    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+      MAG_BUFFER[0][i] = MAG_BUFFER[0][i+1];
+    }
+    MAG_BUFFER[0][MAG_BUFFER_SIZE-1] = mag[0];
+
+    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+      MAG_BUFFER[1][i] = MAG_BUFFER[1][i+1];
+    }
+    MAG_BUFFER[1][MAG_BUFFER_SIZE-1] = mag[1];
+
+    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+      MAG_BUFFER[2][i] = MAG_BUFFER[2][i+1];
+    }
+    MAG_BUFFER[2][MAG_BUFFER_SIZE-1] = mag[2];
+
+    for(int i = 0; i < GYRO_BUFFER_SIZE - 1; i++) {
+      GYRO_BUFFER[0][i] = GYRO_BUFFER[0][i+1];
+    }
+    GYRO_BUFFER[0][GYRO_BUFFER_SIZE-1] = gyro[0];
+
+    for(int i = 0; i < GYRO_BUFFER_SIZE - 1; i++) {
+      GYRO_BUFFER[1][i] = GYRO_BUFFER[1][i+1];
+    }
+    GYRO_BUFFER[1][GYRO_BUFFER_SIZE-1] = gyro[1];
+
+    for(int i = 0; i < GYRO_BUFFER_SIZE - 1; i++) {
+      GYRO_BUFFER[2][i] = GYRO_BUFFER[2][i+1];
+    }
+    GYRO_BUFFER[2][GYRO_BUFFER_SIZE-1] = gyro[2];
+    // printf("%s", data);
+  }
+}
+
+int main(int args, char **parameters) {
+  sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+  initWindow(window);
+
   sf::Clock clock;
+
   if(args > 1) {
     printf("IP: %s\n", parameters[1]);
     networkInitialize(parameters[1]);
@@ -134,129 +273,28 @@ int main(int args, char **parameters) {
     networkInitialize("192.168.1.3");
   }
 
-  // statsserver();
+  sf::UdpSocket socket;
+  socket.setBlocking(false);
 
-  sf::Clock lastMessage;
-  int lastValidPos = 0;
-
-  // sf::TcpSocket socket;
-  // // socket.setBlocking(false);
-  // char data[TCP_SIZE] =
-  //   "GET /?action=stream HTTP/1.1\n"
-  //   "Host: 192.168.1.6:8090\n"
-  //   "Connection: keep-alive\n"
-  //   "Cache-Control: max-age=0\n"
-  //   "User-Agent: Dr Faldin Robotin\n"
-  //   "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n"
-  //   "Accept-Encoding: gzip, deflate\n"
-  //   "\n";
-
-  // sf::Socket::Status connect = socket.connect("192.168.1.6", 8090);
-
-  // if(connect == sf::Socket::Error) {
-  //   std::cout << "Error Connecting" << std::endl;
-  // }
-
-  // // TCP socket:
-  // sf::Socket::Status request = socket.send(data, TCP_SIZE);
-  // std::cout << data << std::endl;
-  // if (request != sf::Socket::Done){
-  //   if(request == sf::Socket::Error) {
-  //     std::cout << "Error Connecting" << std::endl;
-  //   }
-  // }
-
-  // socket.setBlocking(false);
-  std::stringstream readStream;
-
-  int frames = 0;
+  if (socket.bind(8090) != sf::Socket::Done) {
+    printf("Error binding it to port 8090\n");
+  }
 
   while (window.isOpen()) {
-    frames++;
     auto elapsed = clock.restart();
     ImGui::SFML::Update(window, elapsed);
 
-    sf::Event event;
-    while (window.pollEvent(event)) {
-      ImGui::SFML::ProcessEvent(event);
-      handleEvents(event);
-      if (event.type == sf::Event::Closed) die(window);
-    }
+    processEvents(window);
+    processNetwork(socket);
 
     window.clear(sf::Color::Black);
 
-    sf::RectangleShape rectangle(sf::Vector2f(30, 30));
+    drawUI(window, elapsed);
 
-    rectangle.setPosition(0,0);
-    rectangle.setOutlineThickness(20);
-    rectangle.setOutlineColor(sf::Color(0, 0, 0));
-    rectangle.setFillColor(sf::Color(100, 100, 100, 255));
-    window.draw(rectangle);
-
-    // char readData[TCP_SIZE];
-    // std::size_t received;
-
-    // TCP socket:
-    // sf::Socket::Status status = socket.receive(readData, TCP_SIZE, received);
-    // if (status == sf::Socket::Error){
-    //   std::cout << "Error:" << status << std::endl;
-    // } else if (status == sf::Socket::Disconnected) {
-    //   std::cout << "Disconnected" << std::endl;
-    // } else if (status == sf::Socket::Done) {
-
-    //   if(readStream.tellp()) {
-    // 	readStream.clear();
-    // 	readStream.seekg(readStream.beg);
-    // 	// std::cout << "Reseting to:" << readStream.tellp() << std::endl;
-    //   }
-
-    //   socket.receive(readData, TCP_SIZE, received);
-    //   // std::stringstream partialRead;
-    //   // partialRead << readData;
-    //   readStream << readData;
-
-
-    //   std::string firstLine;
-    //   std::string type ("--boundarydonotcross\r");
-    //   // std::string type ("Content-Type: image/jpeg\r");
-    //   int i = 0;
-    //   int images = 0;
-
-    //   while(std::getline(readStream, firstLine)) {
-    // 	// std::cout << firstLine << std::endl;
-    // 	if(firstLine.compare(type) == 0) {
-    // 	  images ++;
-    // 	  // std::cout << firstLine << std::endl;
-    // 	  // std::cout << readStream.tellp() << std::endl;
-    // 	}
-    // 	i++;
-    //   }
-    //   if((frames % 60) == 0) {
-    // 	std::cout << "Images:" << images << std::endl;
-    // 	std::cout << "Lines read: " << i << std::endl;
-    //   }
-    //   // std::getline(readStream, firstLine);
-    //   // std::cout << firstLine << std::endl;
-    //   // if(firstLine == "--boundarydonotcross") {
-    //   // 	std::cout << "Starting Data:" << std::endl;
-    //   // 	std::cout << firstLine << std::endl;
-    //   // }
-    // }
-
-    sf::Time sinceLastMessage = lastMessage.getElapsedTime();
-    if (LAST_COMMAND != CURRENT_COMMAND) {
-      for(int i= 0; i < 4; i++) {
-	sendCommand(CURRENT_COMMAND);
-      }
-      LAST_COMMAND = CURRENT_COMMAND;
-      lastMessage.restart();
-    }
-
-    drawMenu();
-    drawFrameDrawingStats(elapsed.asSeconds());
     ImGui::Render();
     window.display();
   }
+
   ImGui::SFML::Shutdown();
   return 0;
 }

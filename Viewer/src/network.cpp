@@ -19,7 +19,7 @@ void die(const char error[]) {
   exit(1);
 }
 
-void networkInitialize(char server[]) {
+void networkInitialize(const char server[]) {
   // Create a UDP socket
   s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (s == -1){
@@ -44,17 +44,3 @@ void sendCommand(const char message[]) {
     die("sendto()");
   }
 }
-
-// void StatsServer() {
-//   networkInitialize();
-//   while(1) {
-//     // Clean buffer before writing on it again.
-//     const char message[] = "STATS\n";
-//     if(DEBUG) {
-//       printf("Sending packet to %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-//       printf("DATA: %s\n", message);
-//     }
-//     sendCommand(message);
-//   }
-//   close(s);
-// }
