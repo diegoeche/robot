@@ -66,17 +66,52 @@ void StatsServer() {
   }
 
   char myBuffer[BUFLEN];
+
+  rc_imu_config_t conf = rc_default_imu_config();
+  rc_imu_data_t data;
+
+  conf.enable_magnetometer = 1;
+  conf.show_warnings = 1;
+
+
+  rc_calibrate_gyro_routine();
+  printf("[Gyro Calibrated]\n");
+  rc_calibrate_mag_routine();
+  printf("[Mag Calibrated]\n");
+
+  if(rc_initialize_imu(&data, conf)){
+    fprintf(stderr,"rc_mpu_initialize_failed\n");
+  }
+
   while (1) {
-    printf("Sending packet.\n");
-    sprintf(myBuffer, "I'm Alive!\n");
+    /* printf("[Sending packet]\n"); */
+
+    if(rc_read_accel_data(&data)<0){
+      printf("read accel data failed\n");
+    }
+    if(rc_read_gyro_data(&data)<0){
+      printf("read gyro data failed\n");
+    }
+    if(rc_read_mag_data(&data)){
+      printf("read mag data failed\n");
+    }
+    if(rc_read_imu_temp(&data)){
+      printf("read imu thermometer failed\n");
+    }
+
+    sprintf(
+            myBuffer,
+            "TEMP: %4.1f MAG: %6.1f %6.1f %6.1f GYRO: %6.1f %6.1f %6.1f\n",
+            data.temp, data.mag[0], data.mag[1], data.mag[2],
+                       data.gyro[0], data.gyro[1], data.gyro[2]
+            );
+
     if (sendto(s2, myBuffer, BUFLEN, 0, (const sockaddr*) &so_other, slen2)==-1) die("sendto()");
-    usleep(5 * 1000 * 1000);
+    usleep(200 * 1000);
   }
 
   close(s2);
 }
-
-
 
 void use_both_motors(float left_duty, float right_duty) {
   float speed_one = left_duty * 1.15;
