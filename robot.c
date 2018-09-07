@@ -17,44 +17,23 @@ extern "C" {
 #include <thread>
 #include <mutex>
 
+#include "data.h"
+#include "udp_server.h"
+#include "helpers.h"
 
-#define BUFLEN 512  // UDP Server Buffer Size
-#define PORT 8888   // The port on which to listen for incoming data
-
-struct sockaddr_in si_me, si_other;
-
-std::mutex mutex1;
-
-
-unsigned int s, i, slen = sizeof(si_other), recv_len;
-char buf[BUFLEN];
-
-typedef enum robot_state_t{
-  STARTING,
-  STOP,
-  NW, UP, NE,
-  LEFT, RIGHT,
-  DOWN,
-  KILL,
-  GREEN_LED,
-  RED_LED,
-} robot_state_t;
-
-robot_state_t command = STOP;
+extern robot_state_t command = STOP;
+std::mutex command_mutex;
 
 /* extern "C" void rc_disable_motors(); */
-
-
-void die(char *s) {
-  perror(s);
-  exit(1);
+void sendCommand(robot_state_t comm) {
+  std::lock_guard<std::mutex> guard(command_mutex);
+  command = comm;
 }
 
-void sig_handler(int signo)
-{
+void sig_handler(int signo) {
   if (signo == SIGINT) {
     printf(" [Sig-Handler] SIGINT Received\n");
-    close(s);
+    /* close(s); */
     rc_disable_motors();
     rc_disable_servo_power_rail();
     printf(" [Sig-Handler] All Motors Off\n");
@@ -64,116 +43,37 @@ void sig_handler(int signo)
   }
 }
 
-void UDPLog(const char* format, ...) {
-    char       msg[100];
-    va_list    args;
 
-    va_start(args, format);
-    vsnprintf(msg, sizeof(msg), format, args); // do check return value
-    va_end(args);
+void StatsServer() {
+  struct sockaddr_in so_other;
 
-    printf(" [UDP Server] %s\n", msg);
-}
+  int s2, i2, slen2=sizeof(so_other);
 
-void sendCommand(robot_state_t comm) {
-  std::lock_guard<std::mutex> guard(mutex1);
-  command = comm;
-}
-
-void UDPServer() {
   // Create a UDP socket
-  if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
+  if ((s2=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
     die("socket");
   }
 
   // Zero out the structure
-  memset((char *) &si_me, 0, sizeof(si_me));
+  memset((char *) &so_other, 0, sizeof(so_other));
 
-  si_me.sin_family = AF_INET;
-  si_me.sin_port = htons(PORT);
-  si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+  so_other.sin_family = AF_INET;
+  so_other.sin_port = htons(8090);
 
-  // Bind to socket
-  if(bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1) die("bind");
-
-  while(1 && command != KILL) {
-    fflush(stdout);
-
-    // Clean buffer before writing on it again.
-    memset((char *) &buf, 0, sizeof(buf));
-
-    UDPLog("Waiting for data...");
-    if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == -1) {
-      die("recvfrom()");
-    }
-
-    UDPLog("Received packet from %s:%d", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-    UDPLog("Data: [%s  ]", buf);
-
-    std::stringstream ss;
-    ss << buf;
-    std::string command;
-    std::getline(ss, command);
-
-    if(command == "UP") {
-      sendCommand(UP);
-      UDPLog("UP Command Sent");
-    }
-
-    if(command == "DOWN") {
-      sendCommand(DOWN);
-      UDPLog("DOWN Command Sent");
-    }
-
-    if(command == "NW") {
-      sendCommand(NW);
-      UDPLog("NW Command Sent");
-    }
-
-    if(command == "NE") {
-      sendCommand(NE);
-      UDPLog("NE Command Sent");
-    }
-
-    if(command == "LEFT") {
-      sendCommand(LEFT);
-      UDPLog("LEFT Command Sent");
-    }
-
-    if(command == "RIGHT") {
-      sendCommand(RIGHT);
-      UDPLog("RIGHT Command Sent");
-    }
-
-    if(command == "STOP") {
-      sendCommand(STOP);
-      UDPLog("STOP Command Sent");
-    }
-
-    if(command == "KILL") {
-      sendCommand(KILL);
-      UDPLog("KILL Command Sent");
-    }
-
-    if(command == "KILL") {
-      sendCommand(KILL);
-      UDPLog("KILL Command Sent");
-    }
-
-    if(command == "SET_CAMMERA") {
-      float x;
-      float y;
-      ss >> x >> y;
-      if(x > -1.5 && x < 1.5) rc_send_servo_pulse_normalized(7, x);
-      if(y > -1.5 && y < 1.5) rc_send_servo_pulse_normalized(8, y);
-      UDPLog("SET_CAMMERA");
-    }
-    // Reply the client with the same data
-    /* if (sendto(s, buf, recv_len, 0, (struct sockaddr*) &si_other, slen) == -1) die("sendto()"); */
+  if (inet_aton("10.171.31.122", &so_other.sin_addr)==0) {
+    fprintf(stderr, "inet_aton() failed\n");
+    exit(1);
   }
-  printf(" * Closing Socket\n");
-  close(s);
-  printf(" * Ending 'UDPServer' Thread\n");
+
+  char myBuffer[BUFLEN];
+  while (1) {
+    printf("Sending packet.\n");
+    sprintf(myBuffer, "I'm Alive!\n");
+    if (sendto(s2, myBuffer, BUFLEN, 0, (const sockaddr*) &so_other, slen2)==-1) die("sendto()");
+    usleep(5 * 1000 * 1000);
+  }
+
+  close(s2);
 }
 
 
@@ -233,9 +133,8 @@ void Control() {
   robot_state_t last_command = STARTING;
 
   while(1) {
-    std::lock_guard<std::mutex> guard(mutex1);
+    std::lock_guard<std::mutex> guard(command_mutex);
     robot_state_t read_command = command;
-
 
     if(read_command != last_command) {
       switch(read_command) {
@@ -283,10 +182,12 @@ void Control() {
 int main() {
   int rc1, rc2;
   std::thread t1(UDPServer);
-  std::thread t2(Control);
+  std::thread t2(StatsServer);
+  std::thread t3(Control);
 
   t1.join();
   t2.join();
+  t3.join();
 
   // Disable motors
   rc_disable_motors();
