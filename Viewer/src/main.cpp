@@ -17,8 +17,8 @@
 static char UP[]    = "UP\n";
 static char DOWN[]  = "DOWN\n";
 static char LEFT[]  = "LEFT\n";
-static char NW[]  = "NW\n";
-static char NE[]  = "NE\n";
+static char NW[]    = "NW\n";
+static char NE[]    = "NE\n";
 static char RIGHT[] = "RIGHT\n";
 static char STOP[]  = "STOP\n";
 
@@ -34,6 +34,11 @@ void drawMenu() {
   float c_y = y;
   ImGui::SliderFloat("Camera X", &x, -1.5, 1.5, "%.2f");
   ImGui::SliderFloat("Camera Y", &y, -1.5, 1.5, "%.2f");
+
+  // Inverted axis
+  y = (sf::Joystick::getAxisPosition(0, sf::Joystick::X) / 100) * 1.5;
+  x = (sf::Joystick::getAxisPosition(0, sf::Joystick::Y) / 100) * 1.5;
+
   if(c_x != x || c_y != y) {
     std::ostringstream os;
     os << "SET_CAMMERA" << std::endl << x << " " << y << std::endl;
@@ -126,20 +131,20 @@ void drawFrameDrawingStats(float elapsed) {
   // Frame Rate
   ImGui::PlotHistogram(cstr, TIMES_BUFFER, TIMES_BUFFER_SIZE, 0, NULL, 0, 0.1f);
 
-  sf::Vector2f size(250, 80);
+  sf::Vector2f size(250, 120);
 
   ImGui::PlotHistogram("Temperature", TEMP_BUFFER, TEMP_BUFFER_SIZE, 0, NULL, 0, 100.0f, size);
 
   ImGui::Columns(2);
-  ImGui::PlotHistogram("MagX",  MAG_BUFFER[0],  MAG_BUFFER_SIZE,  0, NULL, -1000, 1000.0f, size);
-  ImGui::PlotHistogram("MagY",  MAG_BUFFER[1],  MAG_BUFFER_SIZE,  0, NULL, -4000, 500.0f, size);
-  ImGui::PlotHistogram("MagZ",  MAG_BUFFER[2],  MAG_BUFFER_SIZE,  0, NULL, 0, 360.0f, size);
+  ImGui::PlotHistogram("MagX",  MAG_BUFFER[0],  MAG_BUFFER_SIZE,  0, NULL, -90, 270.0f, size);
+  ImGui::PlotHistogram("MagY",  MAG_BUFFER[1],  MAG_BUFFER_SIZE,  0, NULL, -90, 270.0f, size);
+  ImGui::PlotHistogram("MagZ",  MAG_BUFFER[2],  MAG_BUFFER_SIZE,  0, NULL, -90, 270.0f, size);
 
   ImGui::NextColumn();
 
-  ImGui::PlotHistogram("GyroX", GYRO_BUFFER[0], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
-  ImGui::PlotHistogram("GyroY", GYRO_BUFFER[1], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
-  ImGui::PlotHistogram("GyroZ", GYRO_BUFFER[2], GYRO_BUFFER_SIZE, 0, NULL, -360, 360.0f, size);
+  ImGui::PlotHistogram("GyroX", GYRO_BUFFER[0], GYRO_BUFFER_SIZE, 0, NULL, -90, 90.0f, size);
+  ImGui::PlotHistogram("GyroY", GYRO_BUFFER[1], GYRO_BUFFER_SIZE, 0, NULL, -90, 90.0f, size);
+  ImGui::PlotHistogram("GyroZ", GYRO_BUFFER[2], GYRO_BUFFER_SIZE, 0, NULL, -180, 180.0f, size);
 
   ImGui::End();
 }
@@ -206,41 +211,41 @@ void processNetwork(sf::UdpSocket &socket) {
     float gyro[3];
 
     std::string command;
-    ss >> command;
 
-    ss >> temp;
-    printf("%f\n", temp);
+    // ss >> command;
+    // ss >> temp;
+    // printf("%f\n", temp);
 
-    // MAG:
-    ss >> command;
-    ss >> mag[0] >> mag[1] >> mag[2];
-    printf("%f, %f, %f\n", mag[0], mag[1], mag[2]);
+    // // MAG:
+    // ss >> command;
+    // ss >> mag[0] >> mag[1] >> mag[2];
+    // printf("%f, %f, %f\n", mag[0], mag[1], mag[2]);
 
     // GYRO:
     ss >> command;
     ss >> gyro[0] >> gyro[1] >> gyro[2];
     printf("%f, %f, %f\n", gyro[0], gyro[1], gyro[2]);
 
-    for(int i = 0; i < TEMP_BUFFER_SIZE - 1; i++) {
-      TEMP_BUFFER[i] = TEMP_BUFFER[i+1];
-    }
-    TEMP_BUFFER[TEMP_BUFFER_SIZE-1] = temp;
+    // for(int i = 0; i < TEMP_BUFFER_SIZE - 1; i++) {
+    //   TEMP_BUFFER[i] = TEMP_BUFFER[i+1];
+    // }
+    // TEMP_BUFFER[TEMP_BUFFER_SIZE-1] = temp;
 
 
-    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
-      MAG_BUFFER[0][i] = MAG_BUFFER[0][i+1];
-    }
-    MAG_BUFFER[0][MAG_BUFFER_SIZE-1] = mag[0];
+    // for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+    //   MAG_BUFFER[0][i] = MAG_BUFFER[0][i+1];
+    // }
+    // MAG_BUFFER[0][MAG_BUFFER_SIZE-1] = mag[0];
 
-    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
-      MAG_BUFFER[1][i] = MAG_BUFFER[1][i+1];
-    }
-    MAG_BUFFER[1][MAG_BUFFER_SIZE-1] = mag[1];
+    // for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+    //   MAG_BUFFER[1][i] = MAG_BUFFER[1][i+1];
+    // }
+    // MAG_BUFFER[1][MAG_BUFFER_SIZE-1] = mag[1];
 
-    for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
-      MAG_BUFFER[2][i] = MAG_BUFFER[2][i+1];
-    }
-    MAG_BUFFER[2][MAG_BUFFER_SIZE-1] = mag[2];
+    // for(int i = 0; i < MAG_BUFFER_SIZE - 1; i++) {
+    //   MAG_BUFFER[2][i] = MAG_BUFFER[2][i+1];
+    // }
+    // MAG_BUFFER[2][MAG_BUFFER_SIZE-1] = mag[2];
 
     for(int i = 0; i < GYRO_BUFFER_SIZE - 1; i++) {
       GYRO_BUFFER[0][i] = GYRO_BUFFER[0][i+1];
@@ -265,6 +270,52 @@ int main(int args, char **parameters) {
   initWindow(window);
 
   sf::Clock clock;
+
+  sf::Joystick::update();
+  printf("[Testing Joystick]\n");
+  bool connected = sf::Joystick::isConnected(0);
+
+  // How many buttons does joystick #0 support?
+  unsigned int buttons = sf::Joystick::getButtonCount(0);
+  printf("Buttons: %d\n", buttons);
+  // Does joystick #0 define a X axis?
+
+  bool hasX = sf::Joystick::hasAxis(0, sf::Joystick::X);
+  bool hasY = sf::Joystick::hasAxis(0, sf::Joystick::Y);
+
+  bool hasZ = sf::Joystick::hasAxis(0, sf::Joystick::Z);
+  bool hasR = sf::Joystick::hasAxis(0, sf::Joystick::R);
+
+  bool hasU = sf::Joystick::hasAxis(0, sf::Joystick::U);
+  bool hasV = sf::Joystick::hasAxis(0, sf::Joystick::V);
+
+  bool hasPovX = sf::Joystick::hasAxis(0, sf::Joystick::PovX);
+  bool hasPovY = sf::Joystick::hasAxis(0, sf::Joystick::PovY);
+
+  if(hasX) {
+    printf("Has X\n");
+  }
+  if(hasY) {
+    printf("Has Y\n");
+  }
+  if(hasZ) {
+    printf("Has Z\n");
+  }
+  if(hasR) {
+    printf("Has R\n");
+  }
+  if(hasU) {
+    printf("Has U\n");
+  }
+  if(hasV) {
+    printf("Has V\n");
+  }
+  if(hasPovX) {
+    printf("Has PovX\n");
+  }
+  if(hasPovY) {
+    printf("Has PovY\n");
+  }
 
   if(args > 1) {
     printf("IP: %s\n", parameters[1]);
